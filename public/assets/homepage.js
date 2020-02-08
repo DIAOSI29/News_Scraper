@@ -2,9 +2,10 @@ $(document).ready(function() {
   var newsContainer = $("#newsContainer");
 
   function init() {
+    console.log("lets do it");
     $.get("/unsavedNews").then(function(data) {
       newsContainer.empty();
-
+      console.log(data);
       if (data && data.length) {
         renderNews(data);
       } else {
@@ -19,7 +20,7 @@ $(document).ready(function() {
     for (var i = 0; i < news.length; i++) {
       newsList.push(createNewsCard(news[i]));
     }
-    newsContainer.append(newsCards);
+    newsContainer.append(newsList);
   }
 
   function createNewsCard(news) {
@@ -33,9 +34,10 @@ $(document).ready(function() {
       )
     );
     var cardBody = $("<div class='card-body'>").text(news.Content);
-    cardDiv.append(cardHeading, cardBody);
+    var cardImage = $(`<img class='card-image' src=${news.ImageUrl}`);
+    cardDiv.append(cardHeading, cardBody, cardImage);
 
-    cardDiv.data("_id", article._id);
+    cardDiv.data("_id", news._id);
 
     return cardDiv;
   }
@@ -45,6 +47,11 @@ $(document).ready(function() {
     emptyAlert.append("<h3 class='alert'>Click Get News To Start!</h3>");
     newsContainer.append(emptyAlert);
   }
-});
 
-$(".btn btn-success save").click(function() {});
+  $("#posts").click(function() {
+    $.get("/scrape", function(data) {
+      init();
+    });
+  });
+  $(".btn btn-success save").click(function() {});
+});

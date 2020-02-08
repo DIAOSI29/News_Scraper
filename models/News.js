@@ -1,6 +1,6 @@
 var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
-var PostsSchema = new Schema({
+var NewsSchema = new Schema({
   Topic: {
     type: String,
     unique: true,
@@ -31,5 +31,5 @@ var PostsSchema = new Schema({
   }
 });
 
-var Post = mongoose.model("Post", PostsSchema);
-module.exports = Post;
+var News = mongoose.model("News", NewsSchema);
+module.exports = News;

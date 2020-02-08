@@ -1,8 +1,7 @@
-var express = require("express");
 require("dotenv").config();
+var express = require("express");
 var mongoose = require("mongoose");
 var path = require("path");
-
 var axios = require("axios");
 var cheerio = require("cheerio");
 var db = require("./models");
@@ -16,33 +15,47 @@ var MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
 
 mongoose.connect(MONGODB_URI);
+mongoose.set("useCreateIndex", true);
 
-app.connect(err => {
-  const collection = client.db("test").collection("devices");
-  // perform actions on the collection object
-  console.log("hehfhd");
-  client.close();
-});
+// app.connect(err => {
+//   const collection = client.db("test").collection("devices");
+//   // perform actions on the collection object
+//   console.log("hehfhd");
+//   client.close();
+// });
 
 app.get("/", function(req, res) {
   res.sendFile(path.join(__dirname + "./public/index.html"));
 });
+
 app.get("/scrape", function(req, res) {
-  axios.get("http://www.echojs.com/").then(function(response) {
-    var $ = cheerio.load(response.data);
-    $("article h2").each(function(i, element) {
+  axios.get("https://www.reuters.com/news/technology").then(function(response) {
+    var $cheerio = cheerio.load(response.data);
+
+    $cheerio("article.story").each(function(i, element) {
       var result = {};
-
-      result.title = $(this)
-        .children("a")
-        .text();
-      result.link = $(this)
-        .children("a")
+      result.Topic = $cheerio(element)
+        .children("div.story-content")
+        .find("a")
+        .find("h3")
+        .text()
+        .trim();
+      result.Url = $cheerio(element)
+        .children("div.story-content")
+        .find("a")
         .attr("href");
-
-      db.Article.create(result)
-        .then(function(dbArticle) {
-          console.log(dbArticle);
+      result.Content = $cheerio(element)
+        .children("div.story-content")
+        .find("p")
+        .text();
+      result.ImageUrl = $cheerio(element)
+        .children("div.story-photo")
+        .find("a>img")
+        .attr("org-src");
+      console.log(result.Url);
+      db.News.create(result)
+        .then(function(news) {
+          res.json(news);
         })
         .catch(function(err) {
           console.log(err);
@@ -55,6 +68,7 @@ app.get("/unsavedNews", function(req, res) {
   db.News.find({ saved: false })
     .then(function(news) {
       res.json(news);
+      console.log(news);
     })
     .catch(function(err) {
       res.json(err);
