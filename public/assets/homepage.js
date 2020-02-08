@@ -46,3 +46,5 @@ $(document).ready(function() {
     newsContainer.append(emptyAlert);
   }
 });
+
+$(".btn btn-success save").click(function() {});
