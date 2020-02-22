@@ -1,19 +1,24 @@
-$(document).ready(function() {
+window.onload = function() {
   var newsContainer = $("#newsContainer");
+  $(document).on("click", ".btn.save", handleNewsSave);
+  $(document).on("click", "#news-scrape", handleNewsScrape);
+  $("#clear").on("click", handleNewsClear);
 
-  function init() {
-    console.log("lets do it");
+  function initPage() {
     $.get("/unsavedNews").then(function(data) {
       newsContainer.empty();
+      // console.log("arrive here?");
       console.log(data);
       if (data && data.length) {
+        // console.log("what about here");
         renderNews(data);
       } else {
+        // console.log("empty?");
         renderEmpty();
       }
     });
   }
-  init();
+  initPage();
 
   function renderNews(news) {
     var newsList = [];
@@ -24,34 +29,79 @@ $(document).ready(function() {
   }
 
   function createNewsCard(news) {
-    var cardDiv = $("<div class='card'>");
-    var cardHeading = $("<div class='card-header'>").append(
+    var newsUrl = "https://www.reuters.com/news/technology" + news.Url;
+    var cardDiv = $("<div class=' cardDiv row'>").css(
+      "border",
+      "3px solid black"
+    );
+    var col1 = $("<div class='col-4'>");
+    var col2 = $("<div class='col-8'>");
+    var row1 = $("<div class='row1 row'>");
+    var row2 = $("<div class='row2 row'>");
+
+    var cardHeading = $("<div class='col-8'>").append(
       $("<h3>").append(
         $("<a class='news' target='_blank'>")
-          .attr("href", news.Url)
+          .attr("href", newsUrl)
           .text(news.Topic),
-        $("<a class='btn btn-success save'>Save news</a>")
+        $("<a class='btn btn-success save col-8'>Save news</a>")
       )
     );
-    var cardBody = $("<div class='card-body'>").text(news.Content);
-    var cardImage = $(`<img class='card-image' src=${news.ImageUrl}`);
-    cardDiv.append(cardHeading, cardBody, cardImage);
+    var cardBody = $("<div class=''>").text(news.Content);
+    var cardImage = $("<img class='imageDiv col-4'>")
+      .attr("src", news.ImageUrl)
+      .css("height", "250px");
 
+    col1.append(cardImage);
+    row1.append(cardHeading);
+    row2.append(cardBody);
+    col2.append(row1, row2);
+    cardDiv.append(col1, col2);
     cardDiv.data("_id", news._id);
-
     return cardDiv;
   }
 
   function renderEmpty() {
-    var emptyAlert = $("<div class='emptyAlert'");
-    emptyAlert.append("<h3 class='alert'>Click Get News To Start!</h3>");
+    var emptyAlert = $("<h3>")
+      .append(
+        `。。。。。 There are no news found at the moment.\nClick Get News To Start 。。。。。`
+      )
+      .addClass("empty-container-info");
     newsContainer.append(emptyAlert);
   }
 
-  $("#posts").click(function() {
-    $.get("/scrape", function(data) {
-      init();
+  function handleNewsScrape() {
+    $.get("/scrape").then(function() {
+      // console.log("post");
+      initPage();
     });
-  });
-  $(".btn btn-success save").click(function() {});
-});
+  }
+
+  function handleNewsSave(event) {
+    event.stopPropagation();
+    var newsToSave = $(this)
+      .parents(".cardDiv")
+      .data("_id");
+
+    $(this)
+      .parents(".cardDiv")
+      .remove();
+
+    $.ajax({
+      method: "PUT",
+      url: "/saveNews/" + newsToSave
+    }).then(function(data) {
+      // console.log(data.Saved);
+      if (data.Saved) {
+        initPage();
+      }
+    });
+  }
+
+  function handleNewsClear() {
+    $.get("/clear").then(function() {
+      articleContainer.empty();
+      initPage();
+    });
+  }
+};

@@ -8,16 +8,14 @@ var NewsSchema = new Schema({
   },
   Content: {
     type: String,
-    unique: true,
+
     required: true
   },
   ImageUrl: {
-    type: String,
-    required: true
+    type: String
   },
   Url: {
-    type: String,
-    required: true
+    type: String
   },
   Comment: [
     {

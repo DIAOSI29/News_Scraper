@@ -14,83 +14,96 @@ app.use(express.static("public"));
 var MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
 
-mongoose.connect(MONGODB_URI);
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 mongoose.set("useCreateIndex", true);
-
-// app.connect(err => {
-//   const collection = client.db("test").collection("devices");
-//   // perform actions on the collection object
-//   console.log("hehfhd");
-//   client.close();
-// });
 
 app.get("/", function(req, res) {
   res.sendFile(path.join(__dirname + "./public/index.html"));
 });
+app.get("/savedpage", function(req, res) {
+  res.sendfile(path.join(__dirname + "./pulic/savedpage.html"));
+});
 
-app.get("/scrape", function(req, res) {
-  axios.get("https://www.reuters.com/news/technology").then(function(response) {
-    var $cheerio = cheerio.load(response.data);
+async function AddUniqueNewsItem(newsItem) {
+  try {
+    let duplicateItem = await db.News.findOne({ Url: newsItem.Url });
+    if (duplicateItem == null) {
+      return await db.News.create(newsItem);
+    } else {
+      return duplicateItem;
+    }
+  } catch (e) {
+    console.log(e);
+  }
+}
 
-    $cheerio("article.story").each(function(i, element) {
-      var result = {};
-      result.Topic = $cheerio(element)
-        .children("div.story-content")
-        .find("a")
-        .find("h3")
-        .text()
-        .trim();
-      result.Url = $cheerio(element)
-        .children("div.story-content")
-        .find("a")
-        .attr("href");
-      result.Content = $cheerio(element)
-        .children("div.story-content")
-        .find("p")
-        .text();
-      result.ImageUrl = $cheerio(element)
-        .children("div.story-photo")
-        .find("a>img")
-        .attr("org-src");
-      console.log(result.Url);
-      db.News.create(result)
-        .then(function(news) {
-          res.json(news);
-        })
-        .catch(function(err) {
-          console.log(err);
-        });
+app.get("/scrape", async function(req, res) {
+  axios
+    .get("https://www.reuters.com/news/technology")
+    .then(async function(response) {
+      var $cheerio = cheerio.load(response.data);
+      var results = [];
+      $cheerio("article.story").each(async function(i, element) {
+        var result = {};
+        result.Topic = $cheerio(element)
+          .children("div.story-content")
+          .find("a")
+          .find("h3")
+          .text()
+          .trim();
+        result.Url = $cheerio(element)
+          .children("div.story-content")
+          .find("a")
+          .attr("href");
+        result.Content = $cheerio(element)
+          .children("div.story-content")
+          .find("p")
+          .text();
+        result.ImageUrl = $cheerio(element)
+          .children("div.story-photo")
+          .find("a>img")
+          .attr("org-src");
+        let item = await AddUniqueNewsItem(result);
+        results.push(item);
+      });
+      res.json(results);
     });
+});
+
+app.get("/unsavedNews", async function(req, res) {
+  let data = [];
+  let iterations = 0;
+  while (data.length === 0 && iterations < 3) {
+    iterations++;
+    data = await db.News.find({ Saved: false });
+  }
+  console.log(data);
+  res.json(data);
+});
+
+app.put("/saveNews/:id", function(req, res) {
+  db.News.findOneAndUpdate(
+    { _id: req.params.id },
+    { $set: { Saved: true } },
+    { new: true }
+  )
+    .then(function(data) {
+      console.log(data + "here");
+      res.json(data);
+      // console.log(data);
+    })
+    .catch(function(err) {
+      res.json(err);
+    });
+});
+
+app.get("/clear", function(res, req) {
+  db.News.deleteMany({}, { new: true }).then(function() {
+    console.log("done");
   });
-});
-
-app.get("/unsavedNews", function(req, res) {
-  db.News.find({ saved: false })
-    .then(function(news) {
-      res.json(news);
-      console.log(news);
-    })
-    .catch(function(err) {
-      res.json(err);
-    });
-});
-
-app.post("/saveNews/:id", function(req, res) {
-  db.News.find({ _id: req.param.id })
-    .then(function(news) {
-      return db.News.findOneAndUpdate(
-        { _id: req.params.id },
-        { saved: true },
-        { new: true }
-      );
-    })
-    .then(function(news) {
-      return res.json(news);
-    })
-    .catch(function(err) {
-      // If an error occurred, send it to the client
-      res.json(err);
-    });
 });
 
 app.listen(PORT, function() {
