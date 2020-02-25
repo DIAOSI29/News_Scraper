@@ -91,7 +91,6 @@ app.put("/saveNews/:id", function(req, res) {
     { new: true }
   )
     .then(function(data) {
-      console.log(data + "here");
       res.json(data);
       // console.log(data);
     })
@@ -99,11 +98,19 @@ app.put("/saveNews/:id", function(req, res) {
       res.json(err);
     });
 });
+app.get("/savedNews", async function(req, res) {
+  let data = [];
+  let iterations = 0;
+  while (data.length === 0 && iterations < 3) {
+    iterations++;
+    data = await db.News.find({ Saved: true });
+  }
+
+  res.json(data);
+});
 
 app.get("/clear", function(res, req) {
-  db.News.deleteMany({}, { new: true }).then(function() {
-    console.log("done");
-  });
+  db.News.deleteMany({}, { new: true }).then(function() {});
 });
 
 app.listen(PORT, function() {

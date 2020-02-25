@@ -32,7 +32,7 @@ window.onload = function() {
     var newsUrl = "https://www.reuters.com/news/technology" + news.Url;
     var cardDiv = $("<div class=' cardDiv row'>").css(
       "border",
-      "3px solid black"
+      "2px solid black"
     );
     var col1 = $("<div class='col-4'>");
     var col2 = $("<div class='col-8'>");
