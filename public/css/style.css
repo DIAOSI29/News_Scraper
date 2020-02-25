@@ -59,6 +59,10 @@ a:hover {
   -webkit-box-shadow: inset 0 0 10px #000000;
   box-shadow: inset 0 0 10px #000000;
 }
+.controlBtn:hover {
+  background: rgb(255, 238, 0);
+  color: black;
+}
 
 .cardDiv {
   padding: 20px;

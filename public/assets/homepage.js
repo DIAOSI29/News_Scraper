@@ -39,16 +39,16 @@ window.onload = function() {
     var row1 = $("<div class='row1 row'>");
     var row2 = $("<div class='row2 row'>");
 
-    var cardHeading = $("<div class='col-8'>").append(
+    var cardHeading = $("<div class='col-lg-12'>").append(
       $("<h3>").append(
         $("<a class='news' target='_blank'>")
           .attr("href", newsUrl)
           .text(news.Topic),
-        $("<a class='btn btn-success save col-8'>Save news</a>")
+        $("<a class='btn btn-success save col-6'>Save news</a>")
       )
     );
     var cardBody = $("<div class=''>").text(news.Content);
-    var cardImage = $("<img class='imageDiv col-4'>")
+    var cardImage = $("<img class='imageDiv'>")
       .attr("src", news.ImageUrl)
       .css("height", "250px");
 
